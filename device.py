@@ -78,6 +78,7 @@ class AndroidDevice(object):
         sdk = d.getprop("ro.build.version.sdk")  # eg 26
         abi = d.getprop('ro.product.cpu.abi')  # eg arm64-v8a
         abis = (d.getprop('ro.product.cpu.abilist').strip() or abi).split(",")
+        brand = d.getprop("ro.product.brand")
         # pre = d.getprop('ro.build.version.preview_sdk')  # eg 0
         # if pre and pre != "0":
         #    sdk = sdk + pre
@@ -87,10 +88,13 @@ class AndroidDevice(object):
         stf_zippath = fetching.get_stf_binaries()
         zip_folder, _ = os.path.splitext(os.path.basename(stf_zippath))
         prefix = zip_folder + "/node_modules/@devicefarmer/minicap-prebuilt/prebuilt/"
-        self._push_stf(prefix + abi + "/lib/android-" + sdk + "/minicap.so",
-                       "/data/local/tmp/minicap.so",
-                       mode=0o644,
-                       zipfile_path=stf_zippath)
+        if brand == "Xiaomi" and int(sdk) > 26:
+            d.push(f"vendor/Xiaomi/android-{sdk}/{abi}/minicap.so", "/data/local/tmp/minicap.so")
+        else:
+            self._push_stf(prefix + abi + "/lib/android-" + sdk + "/minicap.so",
+                           "/data/local/tmp/minicap.so",
+                           mode=0o644,
+                           zipfile_path=stf_zippath)
         self._push_stf(prefix + abi + "/bin/minicap",
                        "/data/local/tmp/minicap",
                        zipfile_path=stf_zippath)
