@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import re
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 
@@ -43,6 +44,7 @@ __curdir__ = os.path.dirname(os.path.abspath(__file__))
 hbconn = None
 udid2device = {}
 secret = id_generator(10)
+keyPattern = re.compile(r".*apks/(\w*)\.apk.*")
 
 
 class CorsMixin(object):
@@ -130,7 +132,11 @@ class AppHandler(CorsMixin, tornado.web.RequestHandler):
     @run_on_executor(executor="_download_executor")
     def cache_download(self, url: str) -> str:
         """ download with local cache """
-        target_path = self.cache_filepath(url)
+        m = keyPattern.match(url)
+        if m:
+            target_path = m.group(1)
+        else:
+            target_path = self.cache_filepath(url)
         logger.debug("Download %s to %s", url, target_path)
 
         if os.path.exists(target_path):
